@@ -4,9 +4,14 @@
 
 **Do not open a public issue for a security problem.**
 
-Report it privately through
-[GitHub's private vulnerability reporting](https://github.com/Litica-AI/litica-sdk/security/advisories/new),
-or by email to **security@litica.org**.
+Please use
+[GitHub's private vulnerability reporting](https://github.com/Litica-AI/litica-sdk/security/advisories/new)
+where possible — it keeps the report, the discussion, and the eventual advisory
+in one place.
+
+If you would rather use email, write to **support@litica.org** with
+`SECURITY` at the start of the subject line so it is routed ahead of general
+support.
 
 Please include:
 
@@ -33,7 +38,7 @@ This policy covers the `litica` Python package in this repository — for exampl
 credential handling, TLS verification, or a parsing flaw in the client.
 
 Vulnerabilities in the **Litica service** are not in scope here; report those to
-security@litica.org directly, not through this repository's issue tracker.
+support@litica.org directly, not through this repository's issue tracker.
 
 ## Supported versions
 
