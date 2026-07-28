@@ -6,9 +6,16 @@ name: Release
 #   owner: Litica-AI   repo: litica-sdk   workflow: release.yml
 #   environment: pypi
 
+#
+# workflow_dispatch runs everything except the final upload — a dry run that
+# exercises the build, the safety checks, and the artifact hand-off between
+# jobs. Without it the only way to discover a broken release pipeline is to
+# tag a release, which is the worst possible moment to find out.
+
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -26,6 +33,7 @@ jobs:
           python -m build
 
       - name: Verify the tag matches the packaged version
+        if: github.event_name == 'push'
         run: |
           TAG="${GITHUB_REF_NAME#v}"
           PKG=$(python -c "import tomllib;print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
@@ -62,4 +70,14 @@ jobs:
           name: dist
           path: dist/
 
+      - name: Dry run — everything but the upload
+        if: github.event_name != 'push'
+        run: |
+          echo "Artifacts built and handed between jobs successfully:"
+          ls -l dist/
+          test -n "$(ls dist/*.whl 2>/dev/null)" || { echo "::error::no wheel"; exit 1; }
+          test -n "$(ls dist/*.tar.gz 2>/dev/null)" || { echo "::error::no sdist"; exit 1; }
+          echo "Dry run complete. Nothing was published."
+
       - uses: pypa/gh-action-pypi-publish@release/v1
+        if: github.event_name == 'push'
