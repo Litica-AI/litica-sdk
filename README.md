@@ -214,6 +214,18 @@ server sends `null` for rows that have none.
 - **No tenant provisioning.** That route uses a separate admin credential and
   is intentionally absent from this client.
 
+## Contributing
+
+Bug reports, typing improvements, and documentation fixes are welcome. New
+endpoints are not — this client mirrors the API one-to-one, so a method cannot
+exist before the route does. See [CONTRIBUTING.md](CONTRIBUTING.md) for the
+full picture, and [SECURITY.md](SECURITY.md) to report a vulnerability
+privately.
+
 ## License
 
-See [LICENSE](LICENSE). © Litica, Inc.
+[Apache License 2.0](LICENSE). © 2026 Litica, Inc.
+
+This licence covers **this client library only**. It grants no right to access
+or use the Litica service, which is a separate proprietary hosted service with
+its own terms; an API key is issued separately. See [NOTICE](NOTICE).

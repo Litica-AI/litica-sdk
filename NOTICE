@@ -1,0 +1,12 @@
+Litica Python SDK
+Copyright 2026 Litica, Inc.
+
+This product includes software developed by Litica, Inc.
+
+This license applies to the `litica` Python client library only. It does not
+grant any right to access or use the Litica service itself, which is a separate,
+proprietary hosted service governed by its own terms. An API key is required and
+is issued separately.
+
+"Litica" and the Litica logo are trademarks of Litica, Inc. Apache License 2.0
+Section 6 expressly does not grant permission to use them.

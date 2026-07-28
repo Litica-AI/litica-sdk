@@ -89,6 +89,15 @@ def test_wheel_ships_exactly_the_client_modules(built):
     )
 
 
+def test_py_typed_marker_ships(built):
+    """PEP 561: without this file, type checkers ignore every annotation in the
+    installed package. The SDK is fully annotated, so losing it would silently
+    strip all type safety for every user."""
+    wheel, sdist = built
+    assert "litica/py.typed" in _wheel_names(wheel), "py.typed missing from the wheel"
+    assert "litica/py.typed" in _sdist_names(sdist), "py.typed missing from the sdist"
+
+
 def test_tests_are_not_published(built):
     wheel, sdist = built
     for names in (_wheel_names(wheel), _sdist_names(sdist)):

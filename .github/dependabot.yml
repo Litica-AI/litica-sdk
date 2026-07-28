@@ -1,0 +1,20 @@
+version: 2
+updates:
+  # httpx is the only runtime dependency, so a bump here is worth seeing
+  # promptly — it is the whole transport layer.
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+
+  # Workflow actions, including the PyPI publish action. Keeping these current
+  # matters more than usual: release.yml holds the OIDC publishing permission.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(ci)"
