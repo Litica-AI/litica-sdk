@@ -1,0 +1,58 @@
+[project]
+name = "litica"
+version = "0.1.0"
+description = "Python client for Litica — human memory for AI agents"
+authors = [
+    {name = "Litica, Inc.", email = "jaimebustos@litica.org"},
+]
+readme = "README.md"
+license = {file = "LICENSE"}
+# Deliberately looser than the Litica engine's 3.13: this package is installed
+# into other people's environments, not ours.
+requires-python = ">=3.10"
+dependencies = [
+    "httpx>=0.28",
+]
+keywords = ["litica", "memory", "agents", "llm", "sdk"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.urls]
+Homepage = "https://litica.org"
+Source = "https://github.com/Litica-AI/litica-sdk"
+Issues = "https://github.com/Litica-AI/litica-sdk/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "ruff>=0.15",
+    "build>=1",
+]
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+# Only the client ships. This repo contains nothing else by design, but the
+# explicit include keeps that true if it ever grows a tools/ or scripts/ dir.
+[tool.pdm.build]
+includes = ["litica/"]
+excludes = ["tests/", "**/__pycache__"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

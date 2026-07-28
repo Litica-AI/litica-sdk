@@ -1,0 +1,39 @@
+name: Production contract
+
+# Proves the client works against the real deployment. Kept out of CI on
+# purpose: a production blip should not turn an unrelated pull request red.
+#
+# Requires the LITICA_TEST_API_KEY secret — a key for the dedicated SDK test
+# tenant, deliberately separate from the deploy smoke gate's tenant so this
+# suite's churn never touches the thing that gates releases.
+#
+# pull_request is NOT a trigger: GitHub withholds secrets from fork PRs, so the
+# suite would skip there anyway, and running it on trusted PRs would let a
+# branch write to a live tenant before review.
+
+on:
+  schedule:
+    - cron: "0 7 * * *"   # 07:00 UTC daily
+  workflow_dispatch:      # manual, e.g. immediately before tagging a release
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    environment: production-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Contract tests against the live deployment
+        env:
+          LITICA_TEST_API_KEY: ${{ secrets.LITICA_TEST_API_KEY }}
+          LITICA_TEST_BASE_URL: ${{ vars.LITICA_TEST_BASE_URL || 'https://mcp.litica.org' }}
+        run: pytest tests/test_production_contract.py -v

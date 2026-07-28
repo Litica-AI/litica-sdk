@@ -1,0 +1,28 @@
+Copyright (c) 2026 Litica, Inc. All rights reserved.
+
+-------------------------------------------------------------------------------
+PLACEHOLDER — REPLACE BEFORE MAKING THIS REPOSITORY PUBLIC OR PUBLISHING TO PyPI
+-------------------------------------------------------------------------------
+
+This is the legally conservative default: it reserves all rights and grants
+none. That is safe, but it is not yet usable — a client library that grants a
+user no rights gives them no permission to install or run it, which is not the
+intent of publishing an SDK.
+
+Before release, replace this file with terms that state at minimum:
+
+  - what a user MAY do (install, use, and redistribute the client in order to
+    call the Litica service)
+  - whether modification and forking are permitted
+  - that the terms cover this client only, not the Litica service itself
+  - warranty disclaimer and limitation of liability
+  - governing law
+
+Many commercial SDKs are published under a permissive open-source licence (MIT
+or Apache-2.0) even when the backing service is closed, precisely because the
+client contains no proprietary logic — it only makes HTTP calls. That is worth
+considering, but it is a decision for Litica, Inc. and its counsel, not a
+default to be assumed here.
+
+Until this file is replaced, this software is provided for evaluation by
+Litica, Inc. and its authorised partners only.
