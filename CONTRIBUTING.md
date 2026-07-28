@@ -99,6 +99,8 @@ you do not need to run them, and they will skip silently for you.
   reproduces the inconsistency and documents it. A client that quietly "fixes"
   the API becomes a second, divergent description of it, and the divergence is
   always discovered at the worst moment.
+- **`lit` is the conventional shorthand** in examples and documentation —
+  `import litica as lit`. Please keep examples consistent with it.
 
 ## Tests
 

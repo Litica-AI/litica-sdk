@@ -33,12 +33,13 @@ for hit in hits:
     print(hit.id, hit.text)
 ```
 
-If you prefer a shorthand, `Client` is named so it still reads well:
+The conventional shorthand is `lit`, which is why the class is `Client` rather
+than `LiticaClient` — the short form still reads cleanly:
 
 ```python
-import litica as lc
+import litica as lit
 
-client = lc.Client(api_key="lk_...")
+client = lit.Client(api_key="lk_...")
 ```
 
 ## Configuration

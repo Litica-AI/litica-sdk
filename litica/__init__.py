@@ -11,11 +11,11 @@ A thin, synchronous client for the Litica HTTP API. One method per route.
     for hit in client.search_memories("who owns pricing?"):
         print(hit.text)
 
-Or, with the common shorthand::
+Or, with the conventional shorthand::
 
-    import litica as lc
+    import litica as lit
 
-    client = lc.Client(api_key="lk_...")
+    client = lit.Client(api_key="lk_...")
 """
 
 from __future__ import annotations
@@ -56,7 +56,7 @@ from .models import (
 
 #: Deprecated alias for :class:`Client`, kept for one release so the original
 #: LIT-073 examples keep running. ``litica.Client`` is the supported name —
-#: ``lc.LiticaClient(...)`` stutters under the usual ``import litica as lc``.
+#: ``lit.LiticaClient(...)`` stutters under the usual ``import litica as lit``.
 LiticaClient = Client
 
 __all__ = [
