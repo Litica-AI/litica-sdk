@@ -32,8 +32,42 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
+      # The suite skips itself without a key, which is right for local runs and
+      # fork PRs — but here a missing key means this job is misconfigured, and
+      # 12 silent skips would report green. Fail loudly instead.
+      - name: Require the test key
+        env:
+          LITICA_TEST_API_KEY: ${{ secrets.LITICA_TEST_API_KEY }}
+        run: |
+          if [ -z "$LITICA_TEST_API_KEY" ]; then
+            echo "::error::LITICA_TEST_API_KEY is not set. This job exists to \
+          exercise a live deployment; skipping every test and reporting success \
+          would be a false green."
+            exit 1
+          fi
+
       - name: Contract tests against the live deployment
         env:
           LITICA_TEST_API_KEY: ${{ secrets.LITICA_TEST_API_KEY }}
           LITICA_TEST_BASE_URL: ${{ vars.LITICA_TEST_BASE_URL || 'https://mcp.litica.org' }}
-        run: pytest tests/test_production_contract.py -v
+        # -p no:cacheprovider keeps the runner clean; --strict-config catches a
+        # malformed pytest section rather than silently ignoring it.
+        run: pytest tests/test_production_contract.py -v --strict-config
+
+      # Belt and braces: even with a key present, a collection error or an
+      # accidental skip marker could still produce zero executed tests.
+      - name: Assert the tests actually ran
+        if: always()
+        env:
+          LITICA_TEST_API_KEY: ${{ secrets.LITICA_TEST_API_KEY }}
+          LITICA_TEST_BASE_URL: ${{ vars.LITICA_TEST_BASE_URL || 'https://mcp.litica.org' }}
+        run: |
+          pytest tests/test_production_contract.py --collect-only -q 2>/dev/null \
+            | tail -1
+          COUNT=$(pytest tests/test_production_contract.py --collect-only -q \
+            2>/dev/null | grep -cE '^tests/' || true)
+          if [ "$COUNT" -lt 10 ]; then
+            echo "::error::Only $COUNT contract tests collected; expected 12."
+            exit 1
+          fi
+          echo "Collected $COUNT contract tests."

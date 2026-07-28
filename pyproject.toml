@@ -3,7 +3,7 @@ name = "litica"
 version = "0.1.0"
 description = "Python client for Litica — human memory for AI agents"
 authors = [
-    {name = "Litica, Inc.", email = "jaimebustos@litica.org"},
+    {name = "Litica, Inc.", email = "support@litica.org"},
 ]
 readme = "README.md"
 license = {file = "LICENSE"}
