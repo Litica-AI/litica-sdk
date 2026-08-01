@@ -4,6 +4,8 @@ Python client for [Litica](https://litica.org) — shared human memory for AI ag
 
 A thin, synchronous wrapper over the Litica HTTP API. Each method is one route in the API.
 
+An API key is required to use this SDK. Sign up here -> https://mcp.litica.org/playground/
+
 ```bash
 pip install litica
 ```
