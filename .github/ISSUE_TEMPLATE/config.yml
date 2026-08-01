@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/Litica-AI/litica-sdk/security/advisories/new
+    about: Do not open a public issue for a security problem — see SECURITY.md
+  - name: Ask a question / propose a change
+    url: https://github.com/Litica-AI/litica-sdk/discussions
+    about: New endpoints, retries, async, and other scope questions belong here first
