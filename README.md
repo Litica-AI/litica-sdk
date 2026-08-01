@@ -1,10 +1,8 @@
 # litica
 
-Python client for [Litica](https://litica.org) — human memory for AI agents.
+Python client for [Litica](https://litica.org) — shared human memory for AI agents.
 
-A thin, synchronous wrapper over the Litica HTTP API. One method per route, same
-names, same shapes. No hidden magic: with default arguments, every method is
-exactly one HTTP request.
+A thin, synchronous wrapper over the Litica HTTP API. Each method is one route in the API.
 
 ```bash
 pip install litica
@@ -34,7 +32,7 @@ for hit in hits:
 ```
 
 The conventional shorthand is `lit`, which is why the class is `Client` rather
-than `LiticaClient` — the short form still reads cleanly:
+than `LiticaClient`:
 
 ```python
 import litica as lit
@@ -53,13 +51,7 @@ Precedence is **argument → environment variable → default**.
 | `agent_id` | `LITICA_AGENT_ID` | `"default"` |
 | `namespace_id` | `LITICA_NAMESPACE_ID` | `None` |
 
-Running your own instance? Point at it:
-
-```python
-client = litica.Client(api_key="lk_...", base_url="http://localhost:8000")
-```
-
-### Scope, set once
+### Scope
 
 `agent_id` and `namespace_id` are connection-level defaults applied to every
 call that takes them. Any call can override them.
@@ -82,21 +74,19 @@ not an absence.
 
 ## Writes are queued, not instant
 
-This is the one behaviour that surprises people, so it is worth reading.
+Due to the nature of human-inspired memory, there is a short-term memory queue that has a wait time for ingestion.
 
 `add_memory` returns as soon as the server **accepts** the write (HTTP 202).
-The memory is not searchable yet — Litica decomposes it, embeds it, and stores
-it in the background. A naive write-then-read finds nothing:
+However, the memory is not searchable yet. It takes time for Litica to decompose, embed, and store it. 
+A naive write-then-read will not produce expected behavior:
 
 ```python
 client.add_memory("Sam owns pricing.")
 client.search_memories("pricing")   # probably []
 ```
 
-There is no `wait=` flag. The service does not currently expose a signal that
-reliably says "this specific write has landed", and a convenience that returns
-too early is worse than none — you would trust it and quietly lose data you
-thought was saved. So poll for what you actually care about:
+There is no `wait=` flag at the moment. 
+So poll for what you actually care about:
 
 ```python
 import time
@@ -119,10 +109,7 @@ Two practical notes:
 - **Documents take longest.** One upload fans out into many memories, so allow
   a generous timeout after `add_document`.
 - **Searching is not free of side effects.** Each search strengthens the
-  memories it returns and is recorded in your query log. That is by design —
-  retrieval is rehearsal — but it means a tight polling loop is not inert.
-
-A first-class read-your-writes signal is tracked as a follow-up.
+  memories it returns and is recorded in your query log. That is by design.
 
 ## Errors
 
@@ -191,7 +178,7 @@ client.search_explain("who owns pricing?") # search, with the score breakdown
 ## Responses
 
 Frozen dataclasses mirroring the JSON as the server sends it. Unknown fields
-never break parsing — every model keeps the untouched body on `.raw`:
+never break parsing. Every model keeps the untouched body on `.raw`:
 
 ```python
 hit = client.search_memories("pricing")[0]
