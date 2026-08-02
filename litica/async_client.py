@@ -20,9 +20,11 @@ from .client import UNSET, _ScopedConfig
 from .errors import LiticaConnectionError, LiticaTimeout
 from .models import (
     AddEventPage,
+    ApiKey,
     Graph,
     MemoryRow,
     MemoryTrace,
+    MintedKey,
     Namespace,
     NamespaceAgent,
     QueryRow,
@@ -318,6 +320,32 @@ class AsyncClient(_ScopedConfig):
     async def remove_namespace_agent(self, namespace_id: str, agent_id: str) -> str:
         """Revoke an agent's access. ``DELETE /namespaces/{id}/agents/{agent_id}``."""
         return await self._run(_ops.remove_namespace_agent(namespace_id, agent_id))
+
+    # -- api keys ----------------------------------------------------------
+
+    async def mint_key(self, *, label: str = "") -> MintedKey:
+        """Mint a new API key for this tenant. ``POST /keys`` (201).
+
+        The plaintext comes back **once** on ``.api_key`` and can never be
+        shown again — see :meth:`litica.Client.mint_key`.
+        """
+        return await self._run(_ops.mint_key(label=label))
+
+    async def list_keys(self) -> list[ApiKey]:
+        """Metadata for every key under this tenant, newest first. ``GET /keys``.
+
+        Metadata only — never the plaintext or its hash. Revoked keys stay in
+        the list with ``revoked_at`` set.
+        """
+        return await self._run(_ops.list_keys())
+
+    async def revoke_key(self, key_id: int) -> int:
+        """Revoke one API key. ``DELETE /keys/{key_id}``. Returns its id.
+
+        Revoking the key this client authenticates with cuts off this client
+        too — see :meth:`litica.Client.revoke_key`.
+        """
+        return await self._run(_ops.revoke_key(key_id))
 
     # -- viz / explain -----------------------------------------------------
 

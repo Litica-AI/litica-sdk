@@ -193,6 +193,18 @@ client.list_namespaces()
 client.delete_namespace(ns.namespace_id)
 ```
 
+### API keys (self-service, tenant-scoped)
+
+```python
+minted = client.mint_key(label="ci")   # plaintext in minted.api_key — shown ONCE
+client.list_keys()                     # metadata only, never key material
+client.revoke_key(key_id)              # revoking your own key cuts you off
+```
+
+> Keys mint with full tenant access, and the plaintext can never be recovered
+> after this call returns — store it in your secret manager immediately. The
+> server caps active keys per tenant (mint past the cap → 409).
+
 ### Inspection
 
 ```python
