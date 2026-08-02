@@ -63,7 +63,7 @@ from .models import (
 )
 
 #: Deprecated alias for :class:`Client`, kept for one release so the original
-#: LIT-073 examples keep running. ``litica.Client`` is the supported name —
+#: pre-release examples keep running. ``litica.Client`` is the supported name —
 #: ``lit.LiticaClient(...)`` stutters under the usual ``import litica as lit``.
 LiticaClient = Client
 

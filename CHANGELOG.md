@@ -12,8 +12,8 @@ versions; anything breaking is called out explicitly.
 ### Added
 
 - `litica.AsyncClient` — the async twin of `Client`: the same 22 methods with
-  identical signatures, awaitable, over `httpx.AsyncClient` (LIT-082). Use it
-  inside `asyncio` services; `Client` remains the right choice everywhere else.
+  identical signatures, awaitable, over `httpx.AsyncClient`. Use it inside
+  `asyncio` services; `Client` remains the right choice everywhere else.
 
 ### Changed
 

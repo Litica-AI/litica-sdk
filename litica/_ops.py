@@ -4,8 +4,8 @@ Each function returns an :class:`Op`: the HTTP verb, the path, the encoded
 parameters, and a ``parse`` callable that turns the JSON body into the value
 the client method returns. The sync and async clients differ only in how they
 execute an ``Op`` — never in how one is built or parsed — so the two surfaces
-cannot drift apart (LIT-082: share the request building, differ only at the
-await).
+cannot drift apart: the request building is shared, and the clients differ
+only at the await.
 
 Scope arguments arrive here already resolved: the clients apply their
 connection-level ``agent_id``/``namespace_id`` defaults before calling in, so

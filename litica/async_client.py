@@ -1,7 +1,7 @@
 """``litica.AsyncClient`` — the same methods as ``Client``, awaitable.
 
 Method bodies are not forked: both clients build and parse every request
-through ``litica._ops`` and differ only at the await (LIT-082). Docstrings
+through ``litica._ops`` and differ only at the await. Docstrings
 here state the route and anything async-specific; the full behaviour story
 for each call lives on the matching :class:`litica.Client` method, and a
 parity test asserts the two surfaces stay identical.
