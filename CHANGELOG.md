@@ -16,8 +16,9 @@ versions; anything breaking is called out explicitly.
   inside `asyncio` services; `Client` remains the right choice everywhere else.
 - API-key self-service on both clients: `mint_key`, `list_keys`, `revoke_key`
   (`POST /keys`, `GET /keys`, `DELETE /keys/{key_id}`), with `MintedKey` and
-  `ApiKey` models. The minted plaintext is returned once and is never
-  recoverable afterwards. `GET /viz/config` remains deliberately unwrapped —
+  `ApiKey` models. The minted plaintext is returned once, is never
+  recoverable afterwards, and is excluded from `repr` so logging the object
+  cannot leak it. `GET /viz/config` remains deliberately unwrapped —
   it is unauthenticated playground bootstrap with no meaning for an SDK
   caller. Closes the 4-route coverage gap found by the route-drift guard
   (junobustos/litica-core#138).

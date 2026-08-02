@@ -60,11 +60,13 @@ def test_mint_key_tolerates_a_missing_metadata_row():
     assert minted.key is None
 
 
-def test_mint_key_never_reprs_the_plaintext_row():
-    """``raw`` is repr-suppressed, so a logged model does not leak the key."""
+def test_repr_never_leaks_the_plaintext():
+    """Anyone who logs the minted object must not leak the key (PR #7 review):
+    ``api_key`` and ``raw`` are both repr-suppressed on every model involved."""
     client, _ = build_client(ok(MINTED, status=201))
     minted = client.mint_key()
-    assert "lk_new_plaintext" in repr(minted)  # api_key is the point of the call
+    assert minted.api_key == "lk_new_plaintext"  # still fully readable
+    assert "lk_new_plaintext" not in repr(minted)
     assert minted.key is not None
     assert "lk_new_plaintext" not in repr(minted.key)
 

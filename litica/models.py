@@ -245,11 +245,13 @@ class MintedKey:
     """A freshly minted API key.
 
     ``api_key`` is the plaintext, shown **once** — the server keeps only a
-    hash, so it can never be recovered. ``key`` is the same key's metadata
-    row (``None`` if the server could not echo it back).
+    hash, so it can never be recovered. It is excluded from ``repr`` so a
+    logged object cannot leak it; read it explicitly via ``.api_key``.
+    ``key`` is the same key's metadata row (``None`` if the server could not
+    echo it back).
     """
 
-    api_key: str
+    api_key: str = field(repr=False)
     key: ApiKey | None = None
     raw: dict = field(default_factory=dict, repr=False)
 
