@@ -9,6 +9,19 @@ versions; anything breaking is called out explicitly.
 
 ## [Unreleased]
 
+### Added
+
+- `litica.AsyncClient` — the async twin of `Client`: the same 22 methods with
+  identical signatures, awaitable, over `httpx.AsyncClient`. Use it inside
+  `asyncio` services; `Client` remains the right choice everywhere else.
+
+### Changed
+
+- Internal only: request building and response parsing moved into a shared
+  private module (`litica._ops`) used by both clients, so the sync and async
+  surfaces cannot drift. No public behaviour changed; the sync client's
+  signatures, docstrings, and wire format are unchanged.
+
 ## [0.1.0] — 2026-08-01
 
 First release.

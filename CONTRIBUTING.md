@@ -5,9 +5,11 @@ kinds of changes can be accepted here, and how to get a change merged.
 
 ## What this repository is
 
-`litica` is a **thin, synchronous HTTP client** for the Litica API. It contains
-no memory logic of its own — every method maps to exactly one HTTP route, and
-the package's whole job is auth, serialization, typing, and error shape.
+`litica` is a **thin HTTP client** for the Litica API, in synchronous
+(`Client`) and asynchronous (`AsyncClient`) flavours with identical surfaces.
+It contains no memory logic of its own — every method maps to exactly one HTTP
+route, and the package's whole job is auth, serialization, typing, and error
+shape.
 
 The Litica service itself is a separate, closed-source product. It is not in
 this repository, and issues about service behaviour belong with support rather
@@ -35,8 +37,6 @@ That distinction determines what can be accepted below.
 - **Retries, caching, connection pooling, or batching helpers.** Deliberately
   out of scope for now. Each is its own design discussion; open an issue before
   writing code.
-- **An async client.** Wanted, but it is a planned piece of work with a specific
-  shape. Open an issue first so we do not duplicate effort.
 - **Renaming or restructuring the public surface.** Method names deliberately
   match the API's own vocabulary.
 - **New runtime dependencies.** `httpx` is the only one, and a packaging test
@@ -107,6 +107,9 @@ you do not need to run them, and they will skip silently for you.
 Every behaviour change needs a test. In practice:
 
 - A new or changed method: assert the verb, path, query parameters, and body
+- A route method exists on **both** `Client` and `AsyncClient` — the request
+  logic is written once in `litica/_ops.py`, and the parity test in
+  `tests/test_async_client.py` fails if the two surfaces diverge
 - An error path: assert the exception type and that `detail` survives intact
 - A parsing change: cover both the present and absent field
 

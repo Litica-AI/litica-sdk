@@ -27,9 +27,11 @@ FORBIDDEN_PREFIXES = ("litica_core", "litica_server", "migrations", "evals", "de
 EXPECTED_MODULES = {
     "litica/__init__.py",
     "litica/client.py",
+    "litica/async_client.py",
     "litica/models.py",
     "litica/errors.py",
     "litica/_transport.py",
+    "litica/_ops.py",
 }
 
 

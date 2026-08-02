@@ -37,6 +37,7 @@ Issues = "https://github.com/Litica-AI/litica-sdk/issues"
 [project.optional-dependencies]
 dev = [
     "pytest>=8",
+    "anyio>=4",
     "ruff>=0.15",
     "build>=1",
 ]

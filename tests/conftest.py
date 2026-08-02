@@ -25,3 +25,10 @@ def _isolate_env(monkeypatch):
 @pytest.fixture
 def make_client():
     return build_client
+
+
+@pytest.fixture
+def anyio_backend():
+    """Run ``@pytest.mark.anyio`` tests on asyncio only — the SDK adds no
+    trio support and httpx's asyncio backend is what users get."""
+    return "asyncio"

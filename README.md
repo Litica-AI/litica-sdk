@@ -2,7 +2,9 @@
 
 Python client for [Litica](https://litica.org) — shared human memory for AI agents.
 
-A thin, synchronous wrapper over the Litica HTTP API. Each method is one route in the API.
+A thin wrapper over the Litica HTTP API. Each method is one route in the API,
+available in a synchronous flavour (`Client`) and an asynchronous one
+(`AsyncClient`) with identical surfaces.
 
 An API key is required to use this SDK. Sign up here -> https://mcp.litica.org/playground/
 
@@ -41,6 +43,34 @@ import litica as lit
 
 client = lit.Client(api_key="lk_...")
 ```
+
+## Sync or async?
+
+Both clients expose the same methods with the same signatures — pick by how
+your program runs, not by feature set:
+
+- **`Client`** for scripts, notebooks, CI pipelines, and workers with no
+  `asyncio` in sight.
+- **`AsyncClient`** inside an event loop — a FastAPI handler, an async agent
+  loop — where a blocking call would stall everything else.
+
+```python
+import asyncio
+import litica
+
+async def main():
+    async with litica.AsyncClient(api_key="lk_...") as client:
+        await client.add_memory("Sam owns the Atlas pricing page.")
+        while not (hits := await client.search_memories("who owns pricing?")):
+            await asyncio.sleep(3)   # writes are queued — see below
+        for hit in hits:
+            print(hit.id, hit.text)
+
+asyncio.run(main())
+```
+
+Everything below is written against `Client`; for `AsyncClient`, `await` the
+same calls.
 
 ## Configuration
 
@@ -200,7 +230,7 @@ server sends `null` for rows that have none.
   1-based in `search_explain`. Both are mirrored as the server sends them
   rather than quietly renumbered.
 - **No read-your-writes signal.** See "Writes are queued" above — you poll.
-- **No async client, no retries.** Deliberately out of scope for this version.
+- **No retries.** Deliberately out of scope for this version.
 - **No tenant provisioning.** That route uses a separate admin credential and
   is intentionally absent from this client.
 
