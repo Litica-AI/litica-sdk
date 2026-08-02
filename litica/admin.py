@@ -87,7 +87,7 @@ class AdminClient:
         )
 
     def provision(
-        self, tenant_id: str, *, label: str = "memo-app"
+        self, tenant_id: str, *, label: str | None = None
     ) -> ProvisionedTenant:
         """Create a tenant and mint its first API key. ``POST /provision`` (201).
 
@@ -96,7 +96,9 @@ class AdminClient:
         response carries only the plaintext key (``.api_key``), shown once
         and never recoverable; hand it to the tenant's owner immediately.
 
-        ``label`` names the key, not the tenant. 401 means the admin key is
+        ``label`` names the key, not the tenant. When omitted, the field is
+        not sent and the server applies its own default — the SDK does not
+        copy that default, so it cannot drift. 401 means the admin key is
         wrong — or that the server has no admin key configured at all, which
         it reports identically on purpose.
         """

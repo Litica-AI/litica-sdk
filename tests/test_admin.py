@@ -39,17 +39,19 @@ def test_provision_posts_tenant_and_label_with_the_admin_header():
     assert result.api_key == "lk_first_key"
 
 
-def test_provision_defaults_the_label():
+def test_omitted_label_leaves_the_server_default_authoritative():
+    """No label sent when unset — the SDK does not copy the server's default,
+    so the two can never drift (PR review nit)."""
     client, rec = build_admin(ok({"api_key": "lk_x"}, status=201))
     client.provision(tenant_id="acme")
-    assert rec.last_json == {"tenant_id": "acme", "label": "memo-app"}
+    assert rec.last_json == {"tenant_id": "acme"}
 
 
 def test_dead_can_read_can_write_fields_are_never_sent():
     """The route accepts can_read/can_write and ignores them; the SDK does
     not expose parameters that do nothing."""
     client, rec = build_admin(ok({"api_key": "lk_x"}, status=201))
-    client.provision(tenant_id="acme")
+    client.provision(tenant_id="acme", label="ops")
     assert set(rec.last_json) == {"tenant_id", "label"}
 
 

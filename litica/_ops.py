@@ -300,10 +300,11 @@ def revoke_key(key_id: int) -> Op:
 # -- admin (X-Admin-Key — AdminClient only) --------------------------------------
 
 
-def provision(tenant_id: str, *, label: str) -> Op:
+def provision(tenant_id: str, *, label: str | None) -> Op:
     # The route also accepts can_read/can_write, but the handler ignores them
-    # entirely — the SDK does not expose parameters that do nothing.
-    body = {"tenant_id": tenant_id, "label": label}
+    # entirely — the SDK does not expose parameters that do nothing. An unset
+    # label is omitted so the server's own default stays authoritative.
+    body = clean({"tenant_id": tenant_id, "label": label})
     return Op("POST", "/provision", json=body, parse=ProvisionedTenant.from_json)
 
 

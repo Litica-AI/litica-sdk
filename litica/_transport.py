@@ -157,7 +157,9 @@ class Transport:
 
 
 class AsyncTransport:
-    """Thin wrapper over ``httpx.AsyncClient`` — same contract as ``Transport``."""
+    """Thin wrapper over ``httpx.AsyncClient`` — same contract as ``Transport``,
+    including the ``auth_header`` knob, so an async admin surface would not
+    need transport changes."""
 
     def __init__(
         self,
@@ -167,12 +169,13 @@ class AsyncTransport:
         timeout: float,
         user_agent: str,
         transport: httpx.AsyncBaseTransport | None = None,
+        auth_header: str = "X-API-Key",
     ) -> None:
         self._client = httpx.AsyncClient(
             base_url=base_url,
             timeout=timeout,
             transport=transport,
-            headers={"X-API-Key": api_key, "User-Agent": user_agent},
+            headers={auth_header: api_key, "User-Agent": user_agent},
         )
 
     async def request(
