@@ -21,12 +21,11 @@ import httpx
 
 from . import _ops
 from ._transport import Transport
+from .client import DEFAULT_BASE_URL
 from .errors import LiticaConfigError
 from .models import ProvisionedTenant
 
 __all__ = ["AdminClient"]
-
-DEFAULT_BASE_URL = "https://mcp.litica.org"
 
 
 class AdminClient:

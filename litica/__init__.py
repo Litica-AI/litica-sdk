@@ -23,6 +23,10 @@ Or, with the conventional shorthand::
     import litica as lit
 
     client = lit.Client(api_key="lk_...")
+
+Tenant provisioning is deliberately separate: :class:`AdminClient` takes the
+server's admin credential (``LITICA_ADMIN_KEY``), and neither ordinary client
+can reach it.
 """
 
 from __future__ import annotations

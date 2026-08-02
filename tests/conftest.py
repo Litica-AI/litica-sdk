@@ -15,6 +15,7 @@ def _isolate_env(monkeypatch):
     """No test should inherit a developer's real credentials or endpoint."""
     for var in (
         "LITICA_API_KEY",
+        "LITICA_ADMIN_KEY",
         "LITICA_BASE_URL",
         "LITICA_AGENT_ID",
         "LITICA_NAMESPACE_ID",

@@ -271,10 +271,12 @@ class ProvisionedTenant:
     """The result of ``AdminClient.provision``.
 
     ``api_key`` is the new tenant's first key, in plaintext, shown **once** —
-    the server keeps only a hash. The route returns nothing else.
+    the server keeps only a hash. The route returns nothing else. The key is
+    excluded from ``repr`` so a provisioning script that logs this object
+    cannot leak it; read it explicitly via ``.api_key``.
     """
 
-    api_key: str
+    api_key: str = field(repr=False)
     raw: dict = field(default_factory=dict, repr=False)
 
     @classmethod

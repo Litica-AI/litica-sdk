@@ -87,6 +87,15 @@ def test_repr_does_not_leak_the_credential():
     assert "admin_test_secret" not in repr(client)
 
 
+def test_provisioned_key_never_leaks_through_repr():
+    """A provisioning script that logs its result must not print the tenant's
+    first key (PR #8 review)."""
+    client, _ = build_admin(ok({"api_key": "lk_first_key"}, status=201))
+    result = client.provision(tenant_id="acme")
+    assert result.api_key == "lk_first_key"  # still fully readable
+    assert "lk_first_key" not in repr(result)
+
+
 def test_ordinary_clients_cannot_provision():
     """The separation LIT-083 demands: no provisioning from Client/AsyncClient,
     no memory access from AdminClient."""

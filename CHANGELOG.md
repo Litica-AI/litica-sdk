@@ -24,7 +24,9 @@ versions; anything breaking is called out explicitly.
   separate `X-Admin-Key` credential, in its own module, with a
   `ProvisionedTenant` model (LIT-083). Deliberately unreachable from `Client`
   / `AsyncClient`, and reads `LITICA_ADMIN_KEY`, never `LITICA_API_KEY`. The
-  route's dead `can_read`/`can_write` fields are not exposed.
+  route's dead `can_read`/`can_write` fields are not exposed, and the
+  provisioned key is excluded from `repr` so logging the result cannot leak
+  it.
 
 ### Changed
 
