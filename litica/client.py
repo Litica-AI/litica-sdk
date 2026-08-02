@@ -8,12 +8,12 @@ from typing import Any
 
 import httpx
 
-from ._transport import Transport, clean
+from . import _ops
+from ._transport import Transport
 from .errors import (
     LiticaConfigError,
     LiticaConnectionError,
     LiticaTimeout,
-    LiticaValidationError,
 )
 from .models import (
     AddEventPage,
@@ -60,7 +60,62 @@ class _Unset:
 UNSET: Any = _Unset()
 
 
-class Client:
+class _ScopedConfig:
+    """Configuration and scope resolution shared by ``Client`` and ``AsyncClient``.
+
+    Everything except the transport: API-key/base-URL/scope resolution follows
+    the same argument → environment → default precedence in both clients, and
+    ``_agent``/``_namespace`` apply the connection-level defaults that every
+    scoped method inherits.
+    """
+
+    def __init__(
+        self,
+        api_key: str | None = None,
+        *,
+        base_url: str | None = None,
+        agent_id: str | None = None,
+        namespace_id: str | None = None,
+        timeout: float = 30.0,
+    ) -> None:
+        resolved_key = api_key or os.environ.get("LITICA_API_KEY")
+        if not resolved_key:
+            raise LiticaConfigError(
+                "No API key. Pass api_key=... or set the LITICA_API_KEY "
+                "environment variable."
+            )
+
+        resolved_base = (
+            base_url or os.environ.get("LITICA_BASE_URL") or DEFAULT_BASE_URL
+        )
+
+        self.api_key = resolved_key
+        self.base_url = resolved_base.rstrip("/")
+        self.agent_id = agent_id or os.environ.get("LITICA_AGENT_ID") or "default"
+        self.namespace_id = namespace_id or os.environ.get("LITICA_NAMESPACE_ID")
+        self.timeout = timeout
+
+    # -- scope resolution --------------------------------------------------
+
+    def _agent(self, value: Any) -> str:
+        return self.agent_id if value is UNSET else value
+
+    def _namespace(self, value: Any) -> str | None:
+        return self.namespace_id if value is UNSET else value
+
+    def _user_agent(self) -> str:
+        from . import __version__
+
+        return f"litica-python/{__version__}"
+
+    def __repr__(self) -> str:
+        scope = f"agent_id={self.agent_id!r}"
+        if self.namespace_id:
+            scope += f", namespace_id={self.namespace_id!r}"
+        return f"{type(self).__name__}(base_url={self.base_url!r}, {scope})"
+
+
+class Client(_ScopedConfig):
     """A synchronous client for the Litica HTTP API.
 
     ::
@@ -103,40 +158,33 @@ class Client:
         timeout: float = 30.0,
         transport: httpx.BaseTransport | None = None,
     ) -> None:
-        resolved_key = api_key or os.environ.get("LITICA_API_KEY")
-        if not resolved_key:
-            raise LiticaConfigError(
-                "No API key. Pass api_key=... or set the LITICA_API_KEY "
-                "environment variable."
-            )
-
-        resolved_base = (
-            base_url or os.environ.get("LITICA_BASE_URL") or DEFAULT_BASE_URL
+        super().__init__(
+            api_key,
+            base_url=base_url,
+            agent_id=agent_id,
+            namespace_id=namespace_id,
+            timeout=timeout,
         )
-
-        self.api_key = resolved_key
-        self.base_url = resolved_base.rstrip("/")
-        self.agent_id = agent_id or os.environ.get("LITICA_AGENT_ID") or "default"
-        self.namespace_id = namespace_id or os.environ.get("LITICA_NAMESPACE_ID")
-        self.timeout = timeout
-
-        from . import __version__
-
         self._transport = Transport(
             base_url=self.base_url,
             api_key=self.api_key,
             timeout=timeout,
-            user_agent=f"litica-python/{__version__}",
+            user_agent=self._user_agent(),
             transport=transport,
         )
 
-    # -- scope resolution --------------------------------------------------
-
-    def _agent(self, value: Any) -> str:
-        return self.agent_id if value is UNSET else value
-
-    def _namespace(self, value: Any) -> str | None:
-        return self.namespace_id if value is UNSET else value
+    def _run(self, op: _ops.Op) -> Any:
+        return op.parse(
+            self._transport.request(
+                op.method,
+                op.path,
+                params=op.params,
+                json=op.json,
+                files=op.files,
+                data=op.data,
+                timeout=op.timeout,
+            )
+        )
 
     # -- memories ----------------------------------------------------------
 
@@ -167,16 +215,13 @@ class Client:
                     break
                 time.sleep(3)
         """
-        body = clean(
-            {
-                "content": content,
-                "agent_id": self._agent(agent_id),
-                "namespace_id": self._namespace(namespace_id),
-                "session_id": session_id,
-            }
-        )
-        return QueuedWrite.from_json(
-            self._transport.request("POST", "/memories", json=body)
+        return self._run(
+            _ops.add_memory(
+                content,
+                agent_id=self._agent(agent_id),
+                namespace_id=self._namespace(namespace_id),
+                session_id=session_id,
+            )
         )
 
     def add_memories_batch(
@@ -195,21 +240,13 @@ class Client:
         enqueue order is persist order. The server caps batch size; an
         over-cap batch comes back as a 422.
         """
-        if not contents:
-            raise LiticaValidationError(
-                "add_memories_batch requires at least one item "
-                "(the route rejects an empty batch)."
+        return self._run(
+            _ops.add_memories_batch(
+                contents,
+                agent_id=self._agent(agent_id),
+                namespace_id=self._namespace(namespace_id),
+                session_id=session_id,
             )
-        body = clean(
-            {
-                "contents": list(contents),
-                "agent_id": self._agent(agent_id),
-                "namespace_id": self._namespace(namespace_id),
-                "session_id": session_id,
-            }
-        )
-        return QueuedBatch.from_json(
-            self._transport.request("POST", "/memories/batch", json=body)
         )
 
     def add_document(
@@ -238,20 +275,14 @@ class Client:
         if not path.is_file():
             raise FileNotFoundError(f"No such file: {path}")
 
-        form = clean(
-            {
-                "agent_id": self._agent(agent_id),
-                "namespace_id": self._namespace(namespace_id),
-                "session_id": session_id,
-            }
-        )
         with path.open("rb") as handle:
-            return QueuedDocument.from_json(
-                self._transport.request(
-                    "POST",
-                    "/documents",
-                    files={"file": (path.name, handle)},
-                    data=form,
+            return self._run(
+                _ops.add_document(
+                    path.name,
+                    handle,
+                    agent_id=self._agent(agent_id),
+                    namespace_id=self._namespace(namespace_id),
+                    session_id=session_id,
                     timeout=timeout,
                 )
             )
@@ -270,17 +301,15 @@ class Client:
         Returns a plain list — this route answers with a bare JSON array where
         most others return an object, and the SDK does not invent a wrapper.
         """
-        params = clean(
-            {
-                "query": query,
-                "top_k": top_k,
-                "agent_id": self._agent(agent_id),
-                "namespace_id": self._namespace(namespace_id),
-                "session_id": session_id,
-            }
+        return self._run(
+            _ops.search_memories(
+                query,
+                top_k=top_k,
+                agent_id=self._agent(agent_id),
+                namespace_id=self._namespace(namespace_id),
+                session_id=session_id,
+            )
         )
-        rows = self._transport.request("GET", "/memories/search", params=params) or []
-        return [SearchResult.from_json(r) for r in rows]
 
     def list_memories(
         self,
@@ -295,16 +324,14 @@ class Client:
         Consolidated-away memories are hidden by default;
         ``include_archived=True`` is the explicit window into the archive.
         """
-        params = clean(
-            {
-                "top_k": top_k,
-                "agent_id": self._agent(agent_id),
-                "namespace_id": self._namespace(namespace_id),
-                "include_archived": include_archived,
-            }
+        return self._run(
+            _ops.list_memories(
+                top_k=top_k,
+                agent_id=self._agent(agent_id),
+                namespace_id=self._namespace(namespace_id),
+                include_archived=include_archived,
+            )
         )
-        rows = self._transport.request("GET", "/memories", params=params) or []
-        return [MemoryRow.from_json(r) for r in rows]
 
     def get_memory_trace(self, memory_id: int) -> MemoryTrace:
         """Retrieval lineage for one memory. ``GET /memories/{id}/trace``.
@@ -312,36 +339,30 @@ class Client:
         ``rank`` inside ``retrievals`` is **0-based** — it is 1-based in
         ``search_explain``. Both are mirrored as the server sends them.
         """
-        return MemoryTrace.from_json(
-            self._transport.request("GET", f"/memories/{memory_id}/trace")
-        )
+        return self._run(_ops.get_memory_trace(memory_id))
 
     def delete_memory(self, memory_id: int) -> int:
         """Delete one memory. ``DELETE /memories/{id}``. Returns its id."""
-        payload = self._transport.request("DELETE", f"/memories/{memory_id}")
-        return payload["deleted"]
+        return self._run(_ops.delete_memory(memory_id))
 
     def clear_memories(self, *, agent_id: Any = UNSET) -> int:
         """Delete every memory for one agent. ``DELETE /memories``.
 
         Returns how many were removed. There is no undo.
         """
-        params = clean({"agent_id": self._agent(agent_id)})
-        payload = self._transport.request("DELETE", "/memories", params=params)
-        return payload["cleared"]
+        return self._run(_ops.clear_memories(agent_id=self._agent(agent_id)))
 
     def list_queries(self, limit: int = 50) -> list[QueryRow]:
         """Recent logged queries, newest first. ``GET /queries``."""
-        rows = self._transport.request("GET", "/queries", params={"limit": limit}) or []
-        return [QueryRow.from_json(r) for r in rows]
+        return self._run(_ops.list_queries(limit))
 
     def list_agents(self) -> list[str]:
         """Agent ids that have memories under this tenant. ``GET /agents``."""
-        return self._transport.request("GET", "/agents")["agents"]
+        return self._run(_ops.list_agents())
 
     def get_tenant(self) -> str:
         """The tenant id this API key resolves to. ``GET /tenant``."""
-        return self._transport.request("GET", "/tenant")["tenant_id"]
+        return self._run(_ops.get_tenant())
 
     def health(self) -> bool:
         """Whether the server is reachable and healthy. ``GET /health``.
@@ -351,17 +372,15 @@ class Client:
         not much of a health check.
         """
         try:
-            payload = self._transport.request("GET", "/health")
+            return self._run(_ops.health())
         except (LiticaConnectionError, LiticaTimeout):
             return False
-        return bool(payload) and payload.get("status") == "ok"
 
     # -- namespaces --------------------------------------------------------
 
     def list_namespaces(self) -> list[Namespace]:
         """Every namespace under this tenant. ``GET /namespaces``."""
-        payload = self._transport.request("GET", "/namespaces")
-        return [Namespace.from_json(n) for n in payload["namespaces"]]
+        return self._run(_ops.list_namespaces())
 
     def create_namespace(
         self,
@@ -378,25 +397,22 @@ class Client:
         The server caps agents per namespace and rejects duplicate names with
         a 409 — those rules stay server-side rather than being copied here.
         """
-        body = {
-            "name": name,
-            "read_policy": read_policy,
-            "write_policy": write_policy,
-            "agents": list(agents or []),
-        }
-        return Namespace.from_json(
-            self._transport.request("POST", "/namespaces", json=body)
+        return self._run(
+            _ops.create_namespace(
+                name,
+                read_policy=read_policy,
+                write_policy=write_policy,
+                agents=agents,
+            )
         )
 
     def delete_namespace(self, namespace_id: str) -> str:
         """Delete a namespace. ``DELETE /namespaces/{id}``. Returns its id."""
-        payload = self._transport.request("DELETE", f"/namespaces/{namespace_id}")
-        return payload["deleted"]
+        return self._run(_ops.delete_namespace(namespace_id))
 
     def list_namespace_agents(self, namespace_id: str) -> list[NamespaceAgent]:
         """Agents granted access to a namespace. ``GET /namespaces/{id}/agents``."""
-        payload = self._transport.request("GET", f"/namespaces/{namespace_id}/agents")
-        return [NamespaceAgent.from_json(a) for a in payload["agents"]]
+        return self._run(_ops.list_namespace_agents(namespace_id))
 
     def grant_namespace_agent(
         self,
@@ -407,19 +423,15 @@ class Client:
         can_write: bool = True,
     ) -> NamespaceAgent:
         """Grant an agent access. ``POST /namespaces/{id}/agents``. Upserts."""
-        body = {"agent_id": agent_id, "can_read": can_read, "can_write": can_write}
-        return NamespaceAgent.from_json(
-            self._transport.request(
-                "POST", f"/namespaces/{namespace_id}/agents", json=body
+        return self._run(
+            _ops.grant_namespace_agent(
+                namespace_id, agent_id, can_read=can_read, can_write=can_write
             )
         )
 
     def remove_namespace_agent(self, namespace_id: str, agent_id: str) -> str:
         """Revoke an agent's access. ``DELETE /namespaces/{id}/agents/{agent_id}``."""
-        payload = self._transport.request(
-            "DELETE", f"/namespaces/{namespace_id}/agents/{agent_id}"
-        )
-        return payload["removed"]
+        return self._run(_ops.remove_namespace_agent(namespace_id, agent_id))
 
     # -- viz / explain -----------------------------------------------------
 
@@ -434,15 +446,12 @@ class Client:
 
         ``truncated`` flags that ``limit`` cut the result short.
         """
-        params = clean(
-            {
-                "agent_id": self._agent(agent_id),
-                "namespace_id": self._namespace(namespace_id),
-                "limit": limit,
-            }
-        )
-        return Graph.from_json(
-            self._transport.request("GET", "/viz/graph", params=params)
+        return self._run(
+            _ops.viz_graph(
+                agent_id=self._agent(agent_id),
+                namespace_id=self._namespace(namespace_id),
+                limit=limit,
+            )
         )
 
     def viz_add_events(
@@ -464,23 +473,19 @@ class Client:
         to ``None``, meaning all scopes. Silently narrowing an audit feed to
         the connection's agent is the opposite of what an audit feed is for.
         """
-        params = clean(
-            {
-                "since_id": since_id,
-                "limit": limit,
-                "order": order,
-                "agent_id": agent_id,
-                "namespace_id": namespace_id,
-            }
-        )
-        return AddEventPage.from_json(
-            self._transport.request("GET", "/viz/add-events", params=params)
+        return self._run(
+            _ops.viz_add_events(
+                since_id=since_id,
+                limit=limit,
+                order=order,
+                agent_id=agent_id,
+                namespace_id=namespace_id,
+            )
         )
 
     def viz_pending(self, *, agent_id: Any = UNSET) -> int:
         """Write-queue depth for one agent. ``GET /viz/pending``."""
-        params = clean({"agent_id": self._agent(agent_id)})
-        return self._transport.request("GET", "/viz/pending", params=params)["pending"]
+        return self._run(_ops.viz_pending(agent_id=self._agent(agent_id)))
 
     def search_explain(
         self,
@@ -505,20 +510,17 @@ class Client:
         strengthened, nothing is logged. ``query_rf`` supplies a pre-decomposed
         query to skip the LLM call; it is ignored when ``rehearse=True``.
         """
-        body = clean(
-            {
-                "query": query,
-                "top_k": top_k,
-                "agent_id": self._agent(agent_id),
-                "namespace_id": self._namespace(namespace_id),
-                "rehearse": rehearse,
-                "max_candidates": max_candidates,
-                "session_id": session_id,
-                "query_rf": query_rf,
-            }
-        )
-        return SearchExplanation.from_json(
-            self._transport.request("POST", "/viz/search-explain", json=body)
+        return self._run(
+            _ops.search_explain(
+                query,
+                top_k=top_k,
+                agent_id=self._agent(agent_id),
+                namespace_id=self._namespace(namespace_id),
+                rehearse=rehearse,
+                max_candidates=max_candidates,
+                session_id=session_id,
+                query_rf=query_rf,
+            )
         )
 
     # -- lifecycle ---------------------------------------------------------
@@ -532,9 +534,3 @@ class Client:
 
     def __exit__(self, *exc_info: object) -> None:
         self.close()
-
-    def __repr__(self) -> str:
-        scope = f"agent_id={self.agent_id!r}"
-        if self.namespace_id:
-            scope += f", namespace_id={self.namespace_id!r}"
-        return f"Client(base_url={self.base_url!r}, {scope})"

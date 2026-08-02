@@ -41,8 +41,8 @@ def ok(payload, status: int = 200) -> httpx.Response:
     return httpx.Response(status, json=payload)
 
 
-def build_client(responses, **kwargs) -> tuple[litica.Client, Recorder]:
-    """Client whose HTTP layer replays ``responses``.
+def _recording_transport(responses) -> tuple[httpx.MockTransport, Recorder]:
+    """A ``MockTransport`` that records requests and replays ``responses``.
 
     ``responses`` is either a single ``httpx.Response``, a list replayed in
     order, or a callable taking the request and returning a response.
@@ -66,7 +66,22 @@ def build_client(responses, **kwargs) -> tuple[litica.Client, Recorder]:
         recorder.requests.append(request)
         return producer(request)
 
+    return httpx.MockTransport(handler), recorder
+
+
+def build_client(responses, **kwargs) -> tuple[litica.Client, Recorder]:
+    """Client whose HTTP layer replays ``responses`` (see ``_recording_transport``)."""
+    transport, recorder = _recording_transport(responses)
     kwargs.setdefault("api_key", "lk_test")
     kwargs.setdefault("base_url", "https://api.test")
-    client = litica.Client(transport=httpx.MockTransport(handler), **kwargs)
+    client = litica.Client(transport=transport, **kwargs)
+    return client, recorder
+
+
+def build_async_client(responses, **kwargs) -> tuple[litica.AsyncClient, Recorder]:
+    """Async twin of :func:`build_client` — same scripting, same recorder."""
+    transport, recorder = _recording_transport(responses)
+    kwargs.setdefault("api_key", "lk_test")
+    kwargs.setdefault("base_url", "https://api.test")
+    client = litica.AsyncClient(transport=transport, **kwargs)
     return client, recorder

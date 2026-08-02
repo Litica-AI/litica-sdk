@@ -1,6 +1,8 @@
 """Litica — human memory for AI agents.
 
-A thin, synchronous client for the Litica HTTP API. One method per route.
+A thin client for the Litica HTTP API. One method per route, in a synchronous
+flavour (:class:`Client`) and an asynchronous one (:class:`AsyncClient`) with
+identical surfaces.
 
 ::
 
@@ -10,6 +12,11 @@ A thin, synchronous client for the Litica HTTP API. One method per route.
     client.add_memory("Sam owns the Atlas pricing page.")
     for hit in client.search_memories("who owns pricing?"):
         print(hit.text)
+
+Inside an ``asyncio`` service, same calls, awaited::
+
+    async with litica.AsyncClient(api_key="lk_...") as client:
+        await client.add_memory("Sam owns the Atlas pricing page.")
 
 Or, with the conventional shorthand::
 
@@ -22,6 +29,7 @@ from __future__ import annotations
 
 __version__ = "0.1.0"
 
+from .async_client import AsyncClient
 from .client import Client
 from .errors import (
     LiticaAPIError,
@@ -62,6 +70,7 @@ LiticaClient = Client
 __all__ = [
     "__version__",
     "Client",
+    "AsyncClient",
     "LiticaClient",
     # errors
     "LiticaError",
