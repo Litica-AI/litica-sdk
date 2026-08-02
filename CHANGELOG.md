@@ -12,16 +12,14 @@ versions; anything breaking is called out explicitly.
 ### Added
 
 - `litica.AsyncClient` — the async twin of `Client`: the same methods with
-  identical signatures, awaitable, over `httpx.AsyncClient` (LIT-082). Use it
-  inside `asyncio` services; `Client` remains the right choice everywhere else.
+  identical signatures, awaitable, over `httpx.AsyncClient`. Use it inside
+  `asyncio` services; `Client` remains the right choice everywhere else.
 - API-key self-service on both clients: `mint_key`, `list_keys`, `revoke_key`
   (`POST /keys`, `GET /keys`, `DELETE /keys/{key_id}`), with `MintedKey` and
   `ApiKey` models. The minted plaintext is returned once, is never
   recoverable afterwards, and is excluded from `repr` so logging the object
-  cannot leak it. `GET /viz/config` remains deliberately unwrapped —
-  it is unauthenticated playground bootstrap with no meaning for an SDK
-  caller. Closes the 4-route coverage gap found by the route-drift guard
-  (junobustos/litica-core#138).
+  cannot leak it. `GET /viz/config` remains deliberately unwrapped — it is
+  unauthenticated playground bootstrap with no meaning for an SDK caller.
 
 ### Changed
 
