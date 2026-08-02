@@ -447,6 +447,9 @@ class Client(_ScopedConfig):
         The server caps active keys per tenant; minting past the cap is a
         409. Keys mint with full tenant access — there is no per-key scoping
         beyond an optional rate limit set server-side.
+
+        An empty ``label`` (the default) is stored as ``"self-service"`` —
+        the server names unlabeled keys rather than leaving them blank.
         """
         return self._run(_ops.mint_key(label=label))
 
