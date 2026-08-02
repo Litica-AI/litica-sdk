@@ -4,8 +4,7 @@ Deliberately a separate class taking a separate credential (``X-Admin-Key``,
 a single master secret) so that no code path holding an ordinary API key can
 reach tenant creation. ``Client`` and ``AsyncClient`` cannot provision; this
 class cannot search or write memories. The blast radius of ``provision`` does
-not belong one autocomplete keystroke away from ``search_memories``
-(LIT-083).
+not belong one autocomplete keystroke away from ``search_memories``.
 
 Sync only, on purpose: provisioning is a one-shot setup action that lives in
 scripts and CI, not inside event loops. An async variant can follow if a real

@@ -97,8 +97,8 @@ def test_provisioned_key_never_leaks_through_repr():
 
 
 def test_ordinary_clients_cannot_provision():
-    """The separation LIT-083 demands: no provisioning from Client/AsyncClient,
-    no memory access from AdminClient."""
+    """The separation the design demands: no provisioning from
+    Client/AsyncClient, no memory access from AdminClient."""
     assert not hasattr(litica.Client, "provision")
     assert not hasattr(litica.AsyncClient, "provision")
     for method in ("search_memories", "add_memory", "list_memories"):
