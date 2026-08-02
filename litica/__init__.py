@@ -48,10 +48,12 @@ from .errors import (
 )
 from .models import (
     AddEventPage,
+    ApiKey,
     ExplainResult,
     Graph,
     MemoryRow,
     MemoryTrace,
+    MintedKey,
     Namespace,
     NamespaceAgent,
     QueryRow,
@@ -100,4 +102,6 @@ __all__ = [
     "AddEventPage",
     "ExplainResult",
     "SearchExplanation",
+    "ApiKey",
+    "MintedKey",
 ]

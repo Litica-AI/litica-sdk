@@ -42,6 +42,8 @@ __all__ = [
     "AddEventPage",
     "ExplainResult",
     "SearchExplanation",
+    "ApiKey",
+    "MintedKey",
 ]
 
 
@@ -209,6 +211,54 @@ class Namespace:
             write_policy=data.get("write_policy"),
             created_at=data.get("created_at"),
             agents=data.get("agents") or [],
+            raw=data,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class ApiKey:
+    """Metadata for one API key — never the key material itself.
+
+    The server stores only a hash, so neither the plaintext nor the hash ever
+    appears here. ``revoked_at`` set means the key is dead.
+    """
+
+    id: int
+    label: str | None = None
+    created_at: str | None = None
+    revoked_at: str | None = None
+    raw: dict = field(default_factory=dict, repr=False)
+
+    @classmethod
+    def from_json(cls, data: Any) -> ApiKey:
+        return cls(
+            id=_require(data, "id", "ApiKey"),
+            label=data.get("label"),
+            created_at=data.get("created_at"),
+            revoked_at=data.get("revoked_at"),
+            raw=data,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class MintedKey:
+    """A freshly minted API key.
+
+    ``api_key`` is the plaintext, shown **once** — the server keeps only a
+    hash, so it can never be recovered. ``key`` is the same key's metadata
+    row (``None`` if the server could not echo it back).
+    """
+
+    api_key: str
+    key: ApiKey | None = None
+    raw: dict = field(default_factory=dict, repr=False)
+
+    @classmethod
+    def from_json(cls, data: Any) -> MintedKey:
+        key_row = data.get("key") if isinstance(data, dict) else None
+        return cls(
+            api_key=_require(data, "api_key", "MintedKey"),
+            key=ApiKey.from_json(key_row) if key_row else None,
             raw=data,
         )
 

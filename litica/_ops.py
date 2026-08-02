@@ -22,9 +22,11 @@ from ._transport import clean
 from .errors import LiticaValidationError
 from .models import (
     AddEventPage,
+    ApiKey,
     Graph,
     MemoryRow,
     MemoryTrace,
+    MintedKey,
     Namespace,
     NamespaceAgent,
     QueryRow,
@@ -273,6 +275,25 @@ def remove_namespace_agent(namespace_id: str, agent_id: str) -> Op:
         f"/namespaces/{namespace_id}/agents/{agent_id}",
         parse=lambda payload: payload["removed"],
     )
+
+
+# -- api keys ------------------------------------------------------------------
+
+
+def mint_key(*, label: str) -> Op:
+    return Op("POST", "/keys", json={"label": label}, parse=MintedKey.from_json)
+
+
+def list_keys() -> Op:
+    return Op(
+        "GET",
+        "/keys",
+        parse=lambda payload: [ApiKey.from_json(k) for k in payload["keys"]],
+    )
+
+
+def revoke_key(key_id: int) -> Op:
+    return Op("DELETE", f"/keys/{key_id}", parse=lambda payload: payload["revoked"])
 
 
 # -- viz / explain -------------------------------------------------------------

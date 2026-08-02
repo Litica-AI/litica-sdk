@@ -17,9 +17,11 @@ from .errors import (
 )
 from .models import (
     AddEventPage,
+    ApiKey,
     Graph,
     MemoryRow,
     MemoryTrace,
+    MintedKey,
     Namespace,
     NamespaceAgent,
     QueryRow,
@@ -432,6 +434,38 @@ class Client(_ScopedConfig):
     def remove_namespace_agent(self, namespace_id: str, agent_id: str) -> str:
         """Revoke an agent's access. ``DELETE /namespaces/{id}/agents/{agent_id}``."""
         return self._run(_ops.remove_namespace_agent(namespace_id, agent_id))
+
+    # -- api keys ----------------------------------------------------------
+
+    def mint_key(self, *, label: str = "") -> MintedKey:
+        """Mint a new API key for this tenant. ``POST /keys`` (201).
+
+        The plaintext comes back **once** on ``.api_key`` — the server keeps
+        only a hash, so it can never be shown again. Store it immediately and
+        treat it like a password.
+
+        The server caps active keys per tenant; minting past the cap is a
+        409. Keys mint with full tenant access — there is no per-key scoping
+        beyond an optional rate limit set server-side.
+        """
+        return self._run(_ops.mint_key(label=label))
+
+    def list_keys(self) -> list[ApiKey]:
+        """Metadata for every key under this tenant, newest first. ``GET /keys``.
+
+        Metadata only — never the plaintext or its hash. Revoked keys stay in
+        the list with ``revoked_at`` set.
+        """
+        return self._run(_ops.list_keys())
+
+    def revoke_key(self, key_id: int) -> int:
+        """Revoke one API key. ``DELETE /keys/{key_id}``. Returns its id.
+
+        404 if the id belongs to another tenant or the key is already
+        revoked. Revoking the key this client authenticates with cuts off
+        this client too — its next call will 401.
+        """
+        return self._run(_ops.revoke_key(key_id))
 
     # -- viz / explain -----------------------------------------------------
 
