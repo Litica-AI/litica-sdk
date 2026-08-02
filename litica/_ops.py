@@ -29,6 +29,7 @@ from .models import (
     MintedKey,
     Namespace,
     NamespaceAgent,
+    ProvisionedTenant,
     QueryRow,
     QueuedBatch,
     QueuedDocument,
@@ -294,6 +295,16 @@ def list_keys() -> Op:
 
 def revoke_key(key_id: int) -> Op:
     return Op("DELETE", f"/keys/{key_id}", parse=lambda payload: payload["revoked"])
+
+
+# -- admin (X-Admin-Key — AdminClient only) --------------------------------------
+
+
+def provision(tenant_id: str, *, label: str) -> Op:
+    # The route also accepts can_read/can_write, but the handler ignores them
+    # entirely — the SDK does not expose parameters that do nothing.
+    body = {"tenant_id": tenant_id, "label": label}
+    return Op("POST", "/provision", json=body, parse=ProvisionedTenant.from_json)
 
 
 # -- viz / explain -------------------------------------------------------------

@@ -28,6 +28,7 @@ EXPECTED_MODULES = {
     "litica/__init__.py",
     "litica/client.py",
     "litica/async_client.py",
+    "litica/admin.py",
     "litica/models.py",
     "litica/errors.py",
     "litica/_transport.py",

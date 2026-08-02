@@ -29,6 +29,7 @@ from __future__ import annotations
 
 __version__ = "0.1.0"
 
+from .admin import AdminClient
 from .async_client import AsyncClient
 from .client import Client
 from .errors import (
@@ -56,6 +57,7 @@ from .models import (
     MintedKey,
     Namespace,
     NamespaceAgent,
+    ProvisionedTenant,
     QueryRow,
     QueuedBatch,
     QueuedDocument,
@@ -73,6 +75,7 @@ __all__ = [
     "__version__",
     "Client",
     "AsyncClient",
+    "AdminClient",
     "LiticaClient",
     # errors
     "LiticaError",
@@ -104,4 +107,5 @@ __all__ = [
     "SearchExplanation",
     "ApiKey",
     "MintedKey",
+    "ProvisionedTenant",
 ]

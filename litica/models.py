@@ -44,6 +44,7 @@ __all__ = [
     "SearchExplanation",
     "ApiKey",
     "MintedKey",
+    "ProvisionedTenant",
 ]
 
 
@@ -263,6 +264,22 @@ class MintedKey:
             key=ApiKey.from_json(key_row) if key_row else None,
             raw=data,
         )
+
+
+@dataclass(frozen=True, slots=True)
+class ProvisionedTenant:
+    """The result of ``AdminClient.provision``.
+
+    ``api_key`` is the new tenant's first key, in plaintext, shown **once** —
+    the server keeps only a hash. The route returns nothing else.
+    """
+
+    api_key: str
+    raw: dict = field(default_factory=dict, repr=False)
+
+    @classmethod
+    def from_json(cls, data: Any) -> ProvisionedTenant:
+        return cls(api_key=_require(data, "api_key", "ProvisionedTenant"), raw=data)
 
 
 @dataclass(frozen=True, slots=True)

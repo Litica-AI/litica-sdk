@@ -219,6 +219,22 @@ client.search_explain("who owns pricing?") # search, with the score breakdown
 > `search_memories`. Poking at rankings in a loop will move the rankings you are
 > poking at. Pass `rehearse=False` for a side-effect-free what-if.
 
+## Tenant provisioning (operators only)
+
+Creating tenants uses `AdminClient` — a deliberately separate class taking a
+deliberately separate credential (`X-Admin-Key`, the server's master secret),
+so no code path holding an ordinary API key can reach it. If you are a Litica
+*user*, you will never need this; key self-service for your own tenant is
+`mint_key` above.
+
+```python
+from litica import AdminClient
+
+admin = AdminClient(admin_key="...")            # or LITICA_ADMIN_KEY
+result = admin.provision(tenant_id="acme", label="production")
+result.api_key                                  # the tenant's first key — shown ONCE
+```
+
 ## Responses
 
 Frozen dataclasses mirroring the JSON as the server sends it. Unknown fields
@@ -243,8 +259,6 @@ server sends `null` for rows that have none.
   rather than quietly renumbered.
 - **No read-your-writes signal.** See "Writes are queued" above — you poll.
 - **No retries.** Deliberately out of scope for this version.
-- **No tenant provisioning.** That route uses a separate admin credential and
-  is intentionally absent from this client.
 
 ## Contributing
 

@@ -107,7 +107,11 @@ def _finish(method: str, path: str, response: httpx.Response) -> Any:
 
 
 class Transport:
-    """Thin wrapper over ``httpx.Client``."""
+    """Thin wrapper over ``httpx.Client``.
+
+    ``auth_header`` names the credential header — ``X-API-Key`` for the
+    ordinary clients, ``X-Admin-Key`` for :class:`litica.AdminClient`.
+    """
 
     def __init__(
         self,
@@ -117,12 +121,13 @@ class Transport:
         timeout: float,
         user_agent: str,
         transport: httpx.BaseTransport | None = None,
+        auth_header: str = "X-API-Key",
     ) -> None:
         self._client = httpx.Client(
             base_url=base_url,
             timeout=timeout,
             transport=transport,
-            headers={"X-API-Key": api_key, "User-Agent": user_agent},
+            headers={auth_header: api_key, "User-Agent": user_agent},
         )
 
     def request(
