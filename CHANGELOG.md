@@ -9,6 +9,8 @@ versions; anything breaking is called out explicitly.
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-08-04
+
 ### Added
 
 - `litica.AsyncClient` — the async twin of `Client`: the same methods with
@@ -18,8 +20,11 @@ versions; anything breaking is called out explicitly.
   (`POST /keys`, `GET /keys`, `DELETE /keys/{key_id}`), with `MintedKey` and
   `ApiKey` models. The minted plaintext is returned once, is never
   recoverable afterwards, and is excluded from `repr` so logging the object
-  cannot leak it. `GET /viz/config` remains deliberately unwrapped — it is
-  unauthenticated playground bootstrap with no meaning for an SDK caller.
+  cannot leak it.
+- `viz_config` on both clients (`GET /viz/config`), with a `VizConfig` model —
+  the public, unauthenticated bootstrap for playground-style clients. A
+  present `clerk_publishable_key` means the deployment offers Clerk sign-in;
+  the response never carries a secret.
 
 ### Changed
 
@@ -27,6 +32,18 @@ versions; anything breaking is called out explicitly.
   private module (`litica._ops`) used by both clients, so the sync and async
   surfaces cannot drift. No public behaviour changed; the sync client's
   signatures, docstrings, and wire format are unchanged.
+
+### Known limitations
+
+- **Still no retries.** Transient failures surface as exceptions; wrap calls
+  in your own retry policy if you need one.
+- **Tenant provisioning is absent by design, not omission.** Tenants are
+  created through the Litica account flow (one per account), and a tenant's
+  first API key is minted in the Playground while signed in. From there, key
+  self-service (`mint_key`, `list_keys`, `revoke_key`) is the supported
+  surface.
+- The `rank` inconsistency noted in 0.1.0 (0-based in `get_memory_trace`,
+  1-based in `search_explain`) is unchanged and still mirrored as sent.
 
 ## [0.1.0] — 2026-08-01
 
@@ -66,5 +83,6 @@ First release.
 - **No async client, no retries, no tenant provisioning.** Out of scope for this
   release.
 
-[Unreleased]: https://github.com/Litica-AI/litica-sdk/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Litica-AI/litica-sdk/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Litica-AI/litica-sdk/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Litica-AI/litica-sdk/releases/tag/v0.1.0
