@@ -62,6 +62,7 @@ from .models import (
     QueuedWrite,
     SearchExplanation,
     SearchResult,
+    VizConfig,
 )
 
 #: Deprecated alias for :class:`Client`, kept for one release so the original
@@ -100,6 +101,7 @@ __all__ = [
     "QueuedDocument",
     "Graph",
     "AddEventPage",
+    "VizConfig",
     "ExplainResult",
     "SearchExplanation",
     "ApiKey",

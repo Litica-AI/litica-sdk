@@ -26,6 +26,19 @@ EXPLAIN = {
 }
 
 
+def test_viz_config():
+    client, rec = build_client(ok({"clerk_publishable_key": "pk_test_abc"}))
+    cfg = client.viz_config()
+    assert rec.last.method == "GET"
+    assert rec.last.url.path == "/viz/config"
+    assert cfg.clerk_publishable_key == "pk_test_abc"
+
+
+def test_viz_config_null_key_means_no_clerk_sign_in():
+    client, rec = build_client(ok({"clerk_publishable_key": None}))
+    assert client.viz_config().clerk_publishable_key is None
+
+
 def test_viz_graph():
     client, rec = build_client(ok(GRAPH), agent_id="bot")
     graph = client.viz_graph(limit=50)

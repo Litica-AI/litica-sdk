@@ -30,6 +30,7 @@ from .models import (
     QueuedWrite,
     SearchExplanation,
     SearchResult,
+    VizConfig,
 )
 
 __all__ = ["Client"]
@@ -471,6 +472,16 @@ class Client(_ScopedConfig):
         return self._run(_ops.revoke_key(key_id))
 
     # -- viz / explain -----------------------------------------------------
+
+    def viz_config(self) -> VizConfig:
+        """Public client bootstrap. ``GET /viz/config``.
+
+        The one deliberately unauthenticated route: it exists so a
+        playground-style client can render sign-in before any key exists,
+        and it never carries a secret. A present ``clerk_publishable_key``
+        means the deployment offers Clerk sign-in.
+        """
+        return self._run(_ops.viz_config())
 
     def viz_graph(
         self,
