@@ -35,6 +35,7 @@ from .models import (
     QueuedWrite,
     SearchExplanation,
     SearchResult,
+    VizConfig,
 )
 
 
@@ -297,6 +298,10 @@ def revoke_key(key_id: int) -> Op:
 
 
 # -- viz / explain -------------------------------------------------------------
+
+
+def viz_config() -> Op:
+    return Op("GET", "/viz/config", parse=VizConfig.from_json)
 
 
 def viz_graph(*, agent_id: str | None, namespace_id: str | None, limit: int) -> Op:

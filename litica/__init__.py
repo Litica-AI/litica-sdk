@@ -27,7 +27,7 @@ Or, with the conventional shorthand::
 
 from __future__ import annotations
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 from .async_client import AsyncClient
 from .client import Client
@@ -62,6 +62,7 @@ from .models import (
     QueuedWrite,
     SearchExplanation,
     SearchResult,
+    VizConfig,
 )
 
 #: Deprecated alias for :class:`Client`, kept for one release so the original
@@ -100,6 +101,7 @@ __all__ = [
     "QueuedDocument",
     "Graph",
     "AddEventPage",
+    "VizConfig",
     "ExplainResult",
     "SearchExplanation",
     "ApiKey",

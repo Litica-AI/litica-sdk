@@ -40,6 +40,7 @@ __all__ = [
     "QueuedDocument",
     "Graph",
     "AddEventPage",
+    "VizConfig",
     "ExplainResult",
     "SearchExplanation",
     "ApiKey",
@@ -344,6 +345,26 @@ class AddEventPage:
         return cls(
             events=_require(data, "events", "AddEventPage") or [],
             cursor=data.get("cursor", 0),
+            raw=data,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class VizConfig:
+    """Public bootstrap for playground-style clients.
+
+    ``clerk_publishable_key`` present means the deployment offers Clerk
+    sign-in; ``None`` means it does not. The key is publishable by design —
+    this is the one response in the SDK that never carries a secret.
+    """
+
+    clerk_publishable_key: str | None = None
+    raw: dict = field(default_factory=dict, repr=False)
+
+    @classmethod
+    def from_json(cls, data: Any) -> VizConfig:
+        return cls(
+            clerk_publishable_key=_require(data, "clerk_publishable_key", "VizConfig"),
             raw=data,
         )
 

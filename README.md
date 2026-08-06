@@ -58,13 +58,15 @@ your program runs, not by feature set:
 import asyncio
 import litica
 
+
 async def main():
     async with litica.AsyncClient(api_key="lk_...") as client:
         await client.add_memory("Sam owns the Atlas pricing page.")
         while not (hits := await client.search_memories("who owns pricing?")):
-            await asyncio.sleep(3)   # writes are queued — see below
+            await asyncio.sleep(3)  # writes are queued — see below
         for hit in hits:
             print(hit.id, hit.text)
+
 
 asyncio.run(main())
 ```
@@ -95,9 +97,9 @@ client = litica.Client(
     namespace_id="team-shared",
 )
 
-client.search_memories("who owns pricing?")                # support-bot / team-shared
-client.search_memories("...", agent_id="research-bot")     # override for one call
-client.search_memories("...", namespace_id=None)           # this agent's private memories
+client.search_memories("who owns pricing?")  # support-bot / team-shared
+client.search_memories("...", agent_id="research-bot")  # override for one call
+client.search_memories("...", namespace_id=None)  # this agent's private memories
 ```
 
 Passing `namespace_id=None` **explicitly** means agent-private scope and
@@ -114,7 +116,7 @@ A naive write-then-read will not produce expected behavior:
 
 ```python
 client.add_memory("Sam owns pricing.")
-client.search_memories("pricing")   # probably []
+client.search_memories("pricing")  # probably []
 ```
 
 There is no `wait=` flag at the moment. 
@@ -122,6 +124,7 @@ So poll for what you actually care about:
 
 ```python
 import time
+
 
 def wait_for(client, query, needle, timeout=90):
     deadline = time.monotonic() + timeout
@@ -131,6 +134,7 @@ def wait_for(client, query, needle, timeout=90):
             return hits
         time.sleep(3)
     raise TimeoutError(f"{needle!r} never became searchable")
+
 
 client.add_memory("Sam owns the Atlas pricing page.")
 hits = wait_for(client, "who owns pricing?", "Sam")
@@ -196,9 +200,9 @@ client.delete_namespace(ns.namespace_id)
 ### API keys (self-service, tenant-scoped)
 
 ```python
-minted = client.mint_key(label="ci")   # plaintext in minted.api_key — shown ONCE
-client.list_keys()                     # metadata only, never key material
-client.revoke_key(key_id)              # revoking your own key cuts you off
+minted = client.mint_key(label="ci")  # plaintext in minted.api_key — shown ONCE
+client.list_keys()  # metadata only, never key material
+client.revoke_key(key_id)  # revoking your own key cuts you off
 ```
 
 > Keys mint with full tenant access, and the plaintext can never be recovered
@@ -208,10 +212,11 @@ client.revoke_key(key_id)              # revoking your own key cuts you off
 ### Inspection
 
 ```python
-client.viz_graph(limit=300)                # memories and their links
-client.viz_add_events(since_id=0)          # write-side audit feed
-client.viz_pending()                       # queue depth
-client.search_explain("who owns pricing?") # search, with the score breakdown
+client.viz_config()  # public bootstrap (no secrets)
+client.viz_graph(limit=300)  # memories and their links
+client.viz_add_events(since_id=0)  # write-side audit feed
+client.viz_pending()  # queue depth
+client.search_explain("who owns pricing?")  # search, with the score breakdown
 ```
 
 > **`search_explain` is a real search by default.** With `rehearse=True` it
@@ -227,7 +232,7 @@ never break parsing. Every model keeps the untouched body on `.raw`:
 ```python
 hit = client.search_memories("pricing")[0]
 hit.id, hit.text, hit.created_at, hit.source_agent_id
-hit.raw          # everything the server sent
+hit.raw  # everything the server sent
 ```
 
 Timestamps stay ISO-8601 strings rather than `datetime` objects, because the
