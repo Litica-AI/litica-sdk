@@ -36,11 +36,40 @@ from .models import (
     SearchExplanation,
     SearchResult,
     VizConfig,
+    _require,
 )
 
 
 def _identity(payload: Any) -> Any:
     return payload
+
+
+def _field(key: str, route: str) -> Callable[[Any], Any]:
+    """Unwrap ``{key: value}`` the way the models unwrap their own fields.
+
+    Several routes answer with a one-key envelope rather than a model, and the
+    value inside it *is* the return value. Reading it with ``payload[key]``
+    would raise a bare ``KeyError`` — or a ``TypeError`` when the body is a
+    bare ``204``, which :func:`litica._transport._finish` decodes to ``None`` —
+    and neither inherits from :class:`~litica.errors.LiticaError`, so
+    ``except litica.LiticaError`` would not be the complete catch the SDK
+    documents. Routing through ``_require`` makes a broken envelope a
+    :class:`~litica.errors.LiticaResponseError` like any other contract break.
+    """
+
+    def parse(payload: Any) -> Any:
+        return _require(payload, key, route)
+
+    return parse
+
+
+def _field_of(key: str, route: str, model: Any) -> Callable[[Any], Any]:
+    """``_field`` for an envelope whose value is a list of model rows."""
+
+    def parse(payload: Any) -> Any:
+        return [model.from_json(row) for row in _require(payload, key, route) or []]
+
+    return parse
 
 
 @dataclass(frozen=True, slots=True)
@@ -181,7 +210,9 @@ def get_memory_trace(memory_id: int) -> Op:
 
 def delete_memory(memory_id: int) -> Op:
     return Op(
-        "DELETE", f"/memories/{memory_id}", parse=lambda payload: payload["deleted"]
+        "DELETE",
+        f"/memories/{memory_id}",
+        parse=_field("deleted", "delete_memory"),
     )
 
 
@@ -190,7 +221,7 @@ def clear_memories(*, agent_id: str | None) -> Op:
         "DELETE",
         "/memories",
         params=clean({"agent_id": agent_id}),
-        parse=lambda payload: payload["cleared"],
+        parse=_field("cleared", "clear_memories"),
     )
 
 
@@ -204,18 +235,23 @@ def list_queries(limit: int) -> Op:
 
 
 def list_agents() -> Op:
-    return Op("GET", "/agents", parse=lambda payload: payload["agents"])
+    return Op("GET", "/agents", parse=_field("agents", "list_agents"))
 
 
 def get_tenant() -> Op:
-    return Op("GET", "/tenant", parse=lambda payload: payload["tenant_id"])
+    return Op("GET", "/tenant", parse=_field("tenant_id", "get_tenant"))
 
 
 def health() -> Op:
+    # The one parser that must never raise: ``Client.health`` promises a bool
+    # for an unreachable *or* misbehaving server, so anything that is not a
+    # ``{"status": "ok"}`` object reads as unhealthy rather than as an error.
     return Op(
         "GET",
         "/health",
-        parse=lambda payload: bool(payload) and payload.get("status") == "ok",
+        parse=lambda payload: (
+            isinstance(payload, dict) and payload.get("status") == "ok"
+        ),
     )
 
 
@@ -226,7 +262,7 @@ def list_namespaces() -> Op:
     return Op(
         "GET",
         "/namespaces",
-        parse=lambda payload: [Namespace.from_json(n) for n in payload["namespaces"]],
+        parse=_field_of("namespaces", "list_namespaces", Namespace),
     )
 
 
@@ -246,7 +282,7 @@ def delete_namespace(namespace_id: str) -> Op:
     return Op(
         "DELETE",
         f"/namespaces/{namespace_id}",
-        parse=lambda payload: payload["deleted"],
+        parse=_field("deleted", "delete_namespace"),
     )
 
 
@@ -254,7 +290,7 @@ def list_namespace_agents(namespace_id: str) -> Op:
     return Op(
         "GET",
         f"/namespaces/{namespace_id}/agents",
-        parse=lambda payload: [NamespaceAgent.from_json(a) for a in payload["agents"]],
+        parse=_field_of("agents", "list_namespace_agents", NamespaceAgent),
     )
 
 
@@ -274,7 +310,7 @@ def remove_namespace_agent(namespace_id: str, agent_id: str) -> Op:
     return Op(
         "DELETE",
         f"/namespaces/{namespace_id}/agents/{agent_id}",
-        parse=lambda payload: payload["removed"],
+        parse=_field("removed", "remove_namespace_agent"),
     )
 
 
@@ -286,15 +322,15 @@ def mint_key(*, label: str) -> Op:
 
 
 def list_keys() -> Op:
-    return Op(
-        "GET",
-        "/keys",
-        parse=lambda payload: [ApiKey.from_json(k) for k in payload["keys"]],
-    )
+    return Op("GET", "/keys", parse=_field_of("keys", "list_keys", ApiKey))
 
 
 def revoke_key(key_id: int) -> Op:
-    return Op("DELETE", f"/keys/{key_id}", parse=lambda payload: payload["revoked"])
+    return Op(
+        "DELETE",
+        f"/keys/{key_id}",
+        parse=_field("revoked", "revoke_key"),
+    )
 
 
 # -- viz / explain -------------------------------------------------------------
@@ -334,7 +370,7 @@ def viz_pending(*, agent_id: str | None) -> Op:
         "GET",
         "/viz/pending",
         params=clean({"agent_id": agent_id}),
-        parse=lambda payload: payload["pending"],
+        parse=_field("pending", "viz_pending"),
     )
 
 
