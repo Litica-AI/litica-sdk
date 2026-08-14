@@ -269,7 +269,8 @@ class MintedKey:
 @dataclass(frozen=True, slots=True)
 class QueuedWrite:
     """Ack for a single queued memory. ``queued=True`` means *accepted*, not
-    *searchable* — see ``Client.add_memory`` and the ``wait=`` parameter."""
+    *searchable*. There is no built-in wait; see ``Client.add_memory`` for the
+    polling loop that replaces one."""
 
     queued: bool
     raw: dict = field(default_factory=dict, repr=False)
