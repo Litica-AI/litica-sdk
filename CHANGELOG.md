@@ -28,6 +28,12 @@ versions; anything breaking is called out explicitly.
   `.get` and raised `AttributeError`; anything that is not a
   `{"status": "ok"}` object now reads as unhealthy.
 
+### Documentation
+
+- `QueuedWrite` and `LiticaTimeout` no longer refer to a `wait=` parameter.
+  There has never been one — `Client.add_memory` and the README both say so
+  explicitly and point at a polling loop instead.
+
 ## [0.2.0] — 2026-08-04
 
 ### Added

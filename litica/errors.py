@@ -58,7 +58,7 @@ class LiticaResponseError(LiticaError):
 
 
 class LiticaTimeout(LiticaError):
-    """A request, or a ``wait=True`` poll loop, ran out of time."""
+    """A request exceeded the client's ``timeout``."""
 
 
 class LiticaConnectionError(LiticaError):
