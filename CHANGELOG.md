@@ -9,6 +9,25 @@ versions; anything breaking is called out explicitly.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`except litica.LiticaError` is a complete catch again.** Eleven routes
+  answer with a one-key envelope (`delete_memory`, `clear_memories`,
+  `list_agents`, `get_tenant`, `list_namespaces`, `delete_namespace`,
+  `list_namespace_agents`, `remove_namespace_agent`, `list_keys`,
+  `revoke_key`, `viz_pending`) and read that key straight off the decoded
+  body. A missing key raised a bare `KeyError`, and a `204`/empty body — which
+  the transport decodes to `None` — raised `TypeError: 'NoneType' object is
+  not subscriptable`. Neither inherits from `LiticaError`, so the catch-all
+  the README and `litica.errors` both document silently failed to catch them.
+  These envelopes now go through the same `_require` the models use, so a
+  broken body raises `LiticaResponseError` naming the route, the missing key,
+  and the keys actually received.
+- `health()` no longer raises on a malformed body. It promises a `bool` for an
+  unreachable *or* misbehaving server, but a non-empty JSON array reached
+  `.get` and raised `AttributeError`; anything that is not a
+  `{"status": "ok"}` object now reads as unhealthy.
+
 ## [0.2.0] — 2026-08-04
 
 ### Added
